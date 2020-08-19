@@ -1,3 +1,0 @@
-This is my Tic Tac Toe project for TheOdinProject curriculum.
-
-** It's still under development...
