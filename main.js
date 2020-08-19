@@ -23,7 +23,7 @@ const DisplayController = (() => {
         for(let i = 0; i < board.length; i++) {
             for(let j = 0; j < board[i].length; j++) {
                 const box = document.createElement('div');
-                box.setAttribute('id', `box-${i}${j}`);
+                box.setAttribute('id', `box-${i}${j}`); // id="box-00"
                 box.classList.add('box');
                 grid.appendChild(box);
             }
