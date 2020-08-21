@@ -30,6 +30,8 @@ const DisplayController = (() => {
     const loadBoxListeners = () => {
         grid.querySelectorAll('.box').forEach(box => {
             let boxId = box.id.slice(4).split(''); // box position array: [i, j]
+            boxId[0] = +boxId[0];
+            boxId[1] = +boxId[1];
             box.addEventListener('click', () => {
                 if(!GameBoard.isOccuped(...boxId)) {
                     let sym = Game.getSym();
@@ -55,7 +57,6 @@ const Player = (name, sym) => {
 }
 
 const Game = (() => {
-
     let sym = 'X'; // Player with X starts first
 
     const player1 = Player('Player 1', 'X');
@@ -78,7 +79,9 @@ const Game = (() => {
         if(result) return result;
         result = isVerticalWin(boxId[1], sym);
         if(result) return result;
-        result = isDiagonalWin(boxId, sym);
+        result = isLeftDiagonalWin(boxId, sym);
+        if(result) return result;
+        result = isRightDiagonalWin(boxId, sym);
         return result;
     }
 
@@ -97,6 +100,50 @@ const Game = (() => {
         for(let i = 0; i < board.length; i++) {
             board[i][col] === sym ? count++ : count = 0;
         }
+        return count === 3;
+    }
+
+    const isLeftDiagonalWin = (boxId, sym) => {
+        const board = GameBoard.getBoard();
+        const boardLength = board[0].length;
+        let count = 0;
+        let box;
+
+        if(boxId[0] > boxId[1]) {
+            box = [boxId[0] - boxId[1], 0];
+        } else if(boxId[0] < boxId[1]) {
+            box = [0, boxId[1] - boxId[0]];
+        } else {
+            box = [0, 0];
+        }
+        
+        while(box[0] != boardLength && box[1] != boardLength) {
+            board[box[0]][box[1]] === sym ? count++ : count = 0;
+            box[0]++;
+            box[1]++;
+        }
+
+        return count === 3;
+    }
+
+    const isRightDiagonalWin = (boxId, sym) => {
+        const board = GameBoard.getBoard();
+        const boardLength = board[0].length - 1;
+        let count = 0;
+        let box;
+
+        if(boxId[0] + boxId[1] >= boardLength) {
+            box = [boxId[0] + boxId[1] - boardLength, boardLength];
+        } else {
+            box = [0, boxId[0] + boxId[1]];
+        }
+
+        while(box[0] != boardLength + 1 && box[1] != -1) {
+            board[box[0]][box[1]] === sym ? count++ : count = 0;
+            box[0]++;
+            box[1]--;
+        }
+
         return count === 3;
     }
 
