@@ -8,8 +8,15 @@ const GameBoard = (() => {
     const getBoard = () => board;
     const isOccuped = (i ,j) => board[i][j];
     const markBox = (sym, i, j) => board[i][j] = sym;
-
-    return { getBoard, isOccuped, markBox };
+    const areEmptyBoxes = () => {
+        let r = board.reduce((result, arr) => {
+            if(arr.includes(null)) result = true;
+            return result;
+        }, false);
+        return r;
+    }
+    
+    return { getBoard, isOccuped, markBox, areEmptyBoxes };
 })();
 
 const DisplayController = (() => {
@@ -33,14 +40,24 @@ const DisplayController = (() => {
             boxId[0] = +boxId[0];
             boxId[1] = +boxId[1];
             box.addEventListener('click', () => {
-                if(!GameBoard.isOccuped(...boxId)) {
+                if(!GameBoard.isOccuped(...boxId) && !Game.isOver) {
                     let sym = Game.getSym();
                     GameBoard.markBox(sym, ...boxId);
                     updateBox(sym, box);
                     if(Game.isWinner(boxId, sym)) {
-                        console.log('Has won!!!');
+                        if(sym === 'X') {
+                            console.log(Game.player1.name);
+                        } else {
+                            console.log(Game.player2.name);
+                        }
+                        Game.isOver = true;
                     } else {
-                        Game.changeSym();
+                        if(GameBoard.areEmptyBoxes()) {
+                            Game.changeSym();
+                        } else {
+                            console.log("It's a tie!");
+                            Game.isOver = true;
+                        }
                     }
                 }
             });
@@ -58,6 +75,7 @@ const Player = (name, sym) => {
 
 const Game = (() => {
     let sym = 'X'; // Player with X starts first
+    let isOver = false;
 
     const player1 = Player('Player 1', 'X');
     const player2 = Player('Player 2', '0');;
@@ -66,7 +84,6 @@ const Game = (() => {
     const changePlayer2Name = (name) => player2.name = name;
 
     const getSym = () => sym;
-
     const changeSym = () => sym === 'X' ? sym = '0' : sym = 'X';
 
     const start = () => {
@@ -147,7 +164,15 @@ const Game = (() => {
         return count === 3;
     }
 
-    return { start, getSym, changeSym, isWinner };
+    return { 
+        start, 
+        getSym, 
+        changeSym, 
+        isWinner,
+        player1,
+        player2, 
+        isOver
+    };
 })();
 
 Game.start();
