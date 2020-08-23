@@ -27,8 +27,42 @@ const GameBoard = (() => {
 })();
 
 const DisplayController = (() => {
+    const players = document.querySelector('#players');
     const grid = document.querySelector('#grid');
     const content = document.querySelector('#content');
+
+    const loadPlayers = () => {
+        const player1 = players.querySelector('#player1');
+        const player2 = players.querySelector('#player2');
+        const player1Sym = document.createElement('span');
+        const player2Sym = document.createElement('span');
+
+        player1Sym.textContent = Game.player1.sym;
+        player2Sym.textContent = Game.player2.sym;
+        
+        player1Sym.classList.add('player-sym');
+        player2Sym.classList.add('player-sym');
+
+        player1.appendChild(player1Sym);
+        player2.appendChild(player2Sym);
+        loadPlayerName(player1, Game.player1.name);
+        loadPlayerName(player2, Game.player2.name);
+        players.appendChild(player1);
+        players.appendChild(player2);
+
+        loadPlayerListeners(player1);
+        loadPlayerListeners(player2);
+    }
+
+    const loadPlayerName = (playerDiv, playerName) => {
+        const playerNameDiv = document.createElement('div');
+        playerNameDiv.textContent = playerName;
+        playerDiv.appendChild(playerNameDiv);
+    }
+
+    const loadPlayerListeners = (player) => {
+        player.addEventListener('click', () => runModal(player));
+    }
 
     const createBoard = (board) => {
         while(grid.firstChild) grid.removeChild(grid.lastChild); // clear the board
@@ -38,6 +72,8 @@ const DisplayController = (() => {
                 const box = document.createElement('div');
                 box.setAttribute('id', `box-${i}${j}`); // id="box-00"
                 box.classList.add('box');
+                if(i < board.length - 1) box.classList.add('border-bottom');
+                if(j < board[i].length - 1) box.classList.add('border-right');
                 grid.appendChild(box);
             }
         }
@@ -56,18 +92,19 @@ const DisplayController = (() => {
                     updateBox(sym, box);
                     if(Game.isWinner(boxId, sym)) {
                         if(sym === 'X') {
-                            console.log(Game.player1.name);
+                            showGameResult(Game.player1.name);
                         } else {
-                            console.log(Game.player2.name);
+                            showGameResult(Game.player2.name);
                         }
                         Game.isOver = true;
                         showReplayButton();
+                        highlightWinnerBoxes(Game.winnerBoxes);
                     } else {
                         if(GameBoard.areEmptyBoxes()) {
                             Game.changeSym();
                         } else {
-                            console.log("It's a tie!");
                             Game.isOver = true;
+                            showGameResult();
                             showReplayButton();
                         }
                     }
@@ -76,22 +113,81 @@ const DisplayController = (() => {
         });
     };
 
+    const showGameResult = (winner) => {
+        const gameResult = document.createElement('div');
+        gameResult.classList.add('game-result');
+        if(winner) {
+            gameResult.textContent = `${winner} has won!`;
+        } else {
+            gameResult.textContent = "It's a tie!";
+        }
+        content.appendChild(gameResult);
+    }
+
     const showReplayButton = () => {
         const replayButton = document.createElement('button');
-        replayButton.id = 'replay-button';
-        replayButton.textContent = 'Play again!';
+        replayButton.classList.add('button');
+        replayButton.textContent = 'Play again';
         replayButton.addEventListener('click', Game.restart);
         content.appendChild(replayButton);
     }
-    
-    const hideReplayButton = () => {
-        const replayButton = content.querySelector('#replay-button');
-        content.removeChild(replayButton);
+
+    const highlightWinnerBoxes = (boxes) => {
+        boxes.forEach(b => {
+            const box = grid.querySelector(`#box-${b.join('')}`);
+            box.classList.add('winner-box');loadPlayerName
+        });
+    }
+
+    const runModal = (player) => {
+        const modal = document.getElementById("myModal");
+        const span = document.getElementsByClassName("close")[0];
+        const form = document.getElementById('update-player');
+
+        modal.style.display = "block";
+
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+              modal.style.display = "none";
+            }
+        }
+
+        const changePlayer1Name = function(form) {
+            form.preventDefault();
+            const playerDiv = document.querySelector('#player1');
+            playerDiv.removeChild(playerDiv.lastChild);
+            Game.player1.name = form.target.elements.playerName.value;
+            loadPlayerName(playerDiv, Game.player1.name);
+            modal.style.display = "none";
+        }
+
+        const changePlayer2Name = function(form) {
+            form.preventDefault();
+            const playerDiv = document.querySelector('#player2');
+            playerDiv.removeChild(playerDiv.lastChild);
+            Game.player2.name = form.target.elements.playerName.value;
+            loadPlayerName(playerDiv, Game.player2.name);
+            modal.style.display = "none";
+        }
+
+        if(player.querySelector('span').textContent === 'X') {
+            form.onsubmit = changePlayer1Name.bind(form);
+        } else {
+            form.onsubmit = changePlayer2Name.bind(form);
+        }
+    }
+
+    const clearContent = () => {
+        while(content.firstChild) content.removeChild(content.lastChild);
     }
 
     const updateBox = (sym, box) => box.textContent = sym;
 
-    return { createBoard, hideReplayButton };
+    return { createBoard, clearContent, loadPlayers };
 })();
 
 const Player = (name, sym) => {
@@ -101,26 +197,26 @@ const Player = (name, sym) => {
 const Game = (() => {
     let sym = 'X'; // Player with X starts first
     let isOver = false;
+    let winnerBoxes = [];
 
     const player1 = Player('Player 1', 'X');
-    const player2 = Player('Player 2', '0');;
-
-    const changePlayer1Name = (name) => player1.name = name;
-    const changePlayer2Name = (name) => player2.name = name;
+    const player2 = Player('Player 2', '0');
 
     const getSym = () => sym;
     const changeSym = () => sym === 'X' ? sym = '0' : sym = 'X';
 
     const start = () => {
         GameBoard.setEmptyBoard();
+        DisplayController.loadPlayers();
         DisplayController.createBoard(GameBoard.getBoard());
     };
 
     const restart = () => {
-        DisplayController.hideReplayButton();
+        DisplayController.clearContent();
         if(Game.getSym() === '0') Game.changeSym();
         Game.isOver = false;
-        start();
+        GameBoard.setEmptyBoard();
+        DisplayController.createBoard(GameBoard.getBoard());
     }
 
     const isWinner = (boxId, sym) => {
@@ -139,8 +235,15 @@ const Game = (() => {
         const board = GameBoard.getBoard();
         let count = 0;
         for(let i = 0; i < board[row].length; i++) {
-            board[row][i] === sym ? count++ : count = 0;
+            if(board[row][i] === sym) {
+                count++;
+                Game.winnerBoxes.push([row, i]);
+            } else {
+                count = 0;
+                Game.winnerBoxes = [];
+            }
         }
+        if(count != 3) Game.winnerBoxes = [];
         return count === 3;
     }
 
@@ -148,8 +251,15 @@ const Game = (() => {
         const board = GameBoard.getBoard();
         let count = 0;
         for(let i = 0; i < board.length; i++) {
-            board[i][col] === sym ? count++ : count = 0;
+            if(board[i][col] === sym) {
+                count++;
+                Game.winnerBoxes.push([i, col]);
+            } else {
+                count = 0;
+                Game.winnerBoxes = [];
+            }
         }
+        if(count != 3) Game.winnerBoxes = [];
         return count === 3;
     }
 
@@ -168,11 +278,17 @@ const Game = (() => {
         }
         
         while(box[0] != boardLength && box[1] != boardLength) {
-            board[box[0]][box[1]] === sym ? count++ : count = 0;
+            if(board[box[0]][box[1]] === sym) {
+                count++;
+                Game.winnerBoxes.push([box[0], box[1]]);
+            } else {
+                count = 0;
+                Game.winnerBoxes = [];
+            }
             box[0]++;
             box[1]++;
         }
-
+        if(count != 3) Game.winnerBoxes = [];
         return count === 3;
     }
 
@@ -189,11 +305,17 @@ const Game = (() => {
         }
 
         while(box[0] != boardLength + 1 && box[1] != -1) {
-            board[box[0]][box[1]] === sym ? count++ : count = 0;
+            if(board[box[0]][box[1]] === sym) {
+                count++;
+                Game.winnerBoxes.push([box[0], box[1]]);
+            } else {
+                count = 0;
+                Game.winnerBoxes = [];
+            }
             box[0]++;
             box[1]--;
         }
-
+        if(count != 3) Game.winnerBoxes = [];
         return count === 3;
     }
 
@@ -203,6 +325,7 @@ const Game = (() => {
         getSym, 
         changeSym, 
         isWinner,
+        winnerBoxes,
         player1,
         player2, 
         isOver

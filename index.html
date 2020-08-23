@@ -6,8 +6,23 @@
         <link rel="stylesheet" href="style.css">
     </head>
     <body>
+        <div id="players" class="container">
+            <div id="player1" class="player"></div>
+            <div id="player2" class="player"></div>
+        </div>
         <div id="grid" class="container"></div>
         <div id="content" class="container"></div>
+        <div id="myModal" class="modal">
+            <!-- Modal content -->
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h1>Change player name</h1><br>
+                <form id="update-player">
+                    <input type="text" id="playerName" maxlength="10">
+                    <button class="button" type="submit">Update player</button>
+                </form>
+            </div>
+        </div>
         <script src="main.js"></script>
     </body>
 </html>
