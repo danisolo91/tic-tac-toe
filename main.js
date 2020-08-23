@@ -1,9 +1,5 @@
 const GameBoard = (() => {
-    const board = [
-        [null, null, null],
-        [null, null, null],
-        [null, null, null]
-    ];
+    let board;
 
     const getBoard = () => board;
     const isOccuped = (i ,j) => board[i][j];
@@ -15,14 +11,28 @@ const GameBoard = (() => {
         }, false);
         return r;
     }
+    const setEmptyBoard = () => board = [
+        [null, null, null],
+        [null, null, null],
+        [null, null, null]
+    ];
     
-    return { getBoard, isOccuped, markBox, areEmptyBoxes };
+    return { 
+        getBoard, 
+        setEmptyBoard,
+        isOccuped, 
+        markBox, 
+        areEmptyBoxes 
+    };
 })();
 
 const DisplayController = (() => {
     const grid = document.querySelector('#grid');
+    const content = document.querySelector('#content');
 
     const createBoard = (board) => {
+        while(grid.firstChild) grid.removeChild(grid.lastChild); // clear the board
+
         for(let i = 0; i < board.length; i++) {
             for(let j = 0; j < board[i].length; j++) {
                 const box = document.createElement('div');
@@ -51,12 +61,14 @@ const DisplayController = (() => {
                             console.log(Game.player2.name);
                         }
                         Game.isOver = true;
+                        showReplayButton();
                     } else {
                         if(GameBoard.areEmptyBoxes()) {
                             Game.changeSym();
                         } else {
                             console.log("It's a tie!");
                             Game.isOver = true;
+                            showReplayButton();
                         }
                     }
                 }
@@ -64,9 +76,22 @@ const DisplayController = (() => {
         });
     };
 
+    const showReplayButton = () => {
+        const replayButton = document.createElement('button');
+        replayButton.id = 'replay-button';
+        replayButton.textContent = 'Play again!';
+        replayButton.addEventListener('click', Game.restart);
+        content.appendChild(replayButton);
+    }
+    
+    const hideReplayButton = () => {
+        const replayButton = content.querySelector('#replay-button');
+        content.removeChild(replayButton);
+    }
+
     const updateBox = (sym, box) => box.textContent = sym;
 
-    return { createBoard };
+    return { createBoard, hideReplayButton };
 })();
 
 const Player = (name, sym) => {
@@ -87,8 +112,16 @@ const Game = (() => {
     const changeSym = () => sym === 'X' ? sym = '0' : sym = 'X';
 
     const start = () => {
+        GameBoard.setEmptyBoard();
         DisplayController.createBoard(GameBoard.getBoard());
     };
+
+    const restart = () => {
+        DisplayController.hideReplayButton();
+        if(Game.getSym() === '0') Game.changeSym();
+        Game.isOver = false;
+        start();
+    }
 
     const isWinner = (boxId, sym) => {
         let result = false;
@@ -166,6 +199,7 @@ const Game = (() => {
 
     return { 
         start, 
+        restart,
         getSym, 
         changeSym, 
         isWinner,
